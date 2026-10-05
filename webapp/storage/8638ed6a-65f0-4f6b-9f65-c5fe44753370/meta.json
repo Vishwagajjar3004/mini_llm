@@ -1,0 +1,14 @@
+{
+  "doc_id": "8638ed6a-65f0-4f6b-9f65-c5fe44753370",
+  "filename": "app.py",
+  "doc_type": "code",
+  "sentences": [
+    "The file app.py is written in Python and has 0 lines."
+  ],
+  "source_files": [
+    "app.py"
+  ],
+  "skipped_files": [],
+  "code_explanation": "**app.py** (Python, 0 lines)\n\nNo top-level functions or classes were detected (this may be a script, config, or data file).",
+  "uploaded_at": 1784523803.1349566
+}

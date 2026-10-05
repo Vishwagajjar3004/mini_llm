@@ -1,0 +1,5 @@
+# Additional dependencies needed for the PDF Q&A web app
+# (on top of requirements.txt in the project root, which covers torch)
+flask>=3.0.0
+pdfplumber>=0.11.0
+scikit-learn>=1.4.0

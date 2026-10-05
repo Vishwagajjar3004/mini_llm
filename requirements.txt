@@ -1,0 +1,4 @@
+# Core deep learning library. Everything else (tokenizer, dataset
+# handling, etc.) uses only Python's standard library, so this is the
+# only third-party dependency you need.
+torch>=2.2.0

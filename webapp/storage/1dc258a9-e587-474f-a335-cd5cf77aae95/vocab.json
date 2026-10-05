@@ -1,0 +1,11 @@
+{
+  "<PAD>": 0,
+  "<UNK>": 1,
+  "<BOS>": 2,
+  "<EOS>": 3,
+  "vosk": 4,
+  "pyttsx3": 5,
+  "sounddevice": 6,
+  "flask": 7,
+  "psutil": 8
+}

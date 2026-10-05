@@ -1,0 +1,50 @@
+{
+  "doc_id": "1dc258a9-e587-474f-a335-cd5cf77aae95",
+  "filename": "voice_ai.zip",
+  "doc_type": "zip",
+  "sentences": [
+    "vosk pyttsx3 sounddevice flask psutil"
+  ],
+  "source_files": [
+    "voice_ai/requirements.txt"
+  ],
+  "skipped_files": [
+    "voice_ai/__pycache__/assistant.cpython-310.pyc",
+    "voice_ai/.vscode/image-comparator/image-comparator.log",
+    "voice_ai/templates/index.html",
+    "voice_ai/model/am/final.mdl",
+    "voice_ai/model/graph/disambig_tid.int",
+    "voice_ai/model/graph/HCLr.fst",
+    "voice_ai/model/graph/Gr.fst",
+    "voice_ai/model/graph/phones/word_boundary.int",
+    "voice_ai/model/conf/model.conf",
+    "voice_ai/model/conf/mfcc.conf",
+    "voice_ai/model/ivector/splice.conf",
+    "voice_ai/model/ivector/final.dubm",
+    "voice_ai/model/ivector/global_cmvn.stats",
+    "voice_ai/model/ivector/final.ie",
+    "voice_ai/model/ivector/online_cmvn.conf",
+    "voice_ai/model/ivector/final.mat",
+    "voice_ai/model/README",
+    "voice_ai/vosk-model-small-en-us-0.15/am/final.mdl",
+    "voice_ai/vosk-model-small-en-us-0.15/README",
+    "voice_ai/vosk-model-small-en-us-0.15/graph/disambig_tid.int",
+    "voice_ai/vosk-model-small-en-us-0.15/graph/HCLr.fst",
+    "voice_ai/vosk-model-small-en-us-0.15/graph/Gr.fst",
+    "voice_ai/vosk-model-small-en-us-0.15/graph/phones/word_boundary.int",
+    "voice_ai/vosk-model-small-en-us-0.15/conf/model.conf",
+    "voice_ai/vosk-model-small-en-us-0.15/conf/mfcc.conf",
+    "voice_ai/vosk-model-small-en-us-0.15/ivector/splice.conf",
+    "voice_ai/vosk-model-small-en-us-0.15/ivector/final.dubm",
+    "voice_ai/vosk-model-small-en-us-0.15/ivector/global_cmvn.stats",
+    "voice_ai/vosk-model-small-en-us-0.15/ivector/final.ie",
+    "voice_ai/vosk-model-small-en-us-0.15/ivector/online_cmvn.conf",
+    "voice_ai/vosk-model-small-en-us-0.15/ivector/final.mat",
+    "voice_ai/vosk-model-small-en-us-0.15.zip",
+    "voice_ai/README.md",
+    "voice_ai/app.py",
+    "voice_ai/assistant.py"
+  ],
+  "code_explanation": null,
+  "uploaded_at": 1784288711.1312041
+}

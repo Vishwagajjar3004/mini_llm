@@ -1,0 +1,152 @@
+the cat sat on the mat .
+the dog sat on the rug .
+the cat likes the dog .
+the dog likes the cat .
+the cat chased the mouse .
+the dog chased the ball .
+the mouse ran from the cat .
+the cat sleeps on the bed .
+the dog sleeps on the floor .
+the sun rises in the morning .
+the sun sets in the evening .
+the moon shines at night .
+the stars shine in the sky .
+the sky is blue during the day .
+the sky is dark at night .
+i love pizza .
+i love pasta .
+i love the cat .
+i love the dog .
+she loves the cat .
+she loves the dog .
+he loves pizza .
+he loves pasta .
+we love the sun .
+we love the moon .
+the boy plays with the dog .
+the girl plays with the cat .
+the boy reads a book .
+the girl reads a book .
+the teacher reads a book .
+the student writes a letter .
+the man drives a car .
+the woman drives a car .
+the car is fast .
+the bicycle is slow .
+the bird flies in the sky .
+the fish swims in the water .
+the fish swims in the river .
+the river flows to the sea .
+the rain falls from the sky .
+the wind blows through the trees .
+the trees grow in the forest .
+the flowers bloom in the garden .
+the garden is full of flowers .
+the farmer grows corn .
+the farmer grows wheat .
+the baker bakes bread .
+the baker bakes cake .
+the chef cooks pizza .
+the chef cooks pasta .
+i eat pizza for dinner .
+i eat pasta for dinner .
+she eats an apple .
+he eats a banana .
+we eat breakfast in the morning .
+they eat dinner in the evening .
+the children play in the park .
+the children play with the ball .
+the ball is round .
+the sun is bright .
+the moon is bright at night .
+the cat is small .
+the dog is big .
+the mouse is small .
+the elephant is big .
+the elephant lives in the forest .
+the lion lives in the forest .
+the lion is strong .
+the tiger is strong .
+the rabbit is fast .
+the turtle is slow .
+the turtle walks slowly .
+the rabbit runs quickly .
+i like the rabbit .
+i like the turtle .
+she likes the lion .
+he likes the tiger .
+the king lives in a castle .
+the queen lives in a castle .
+the castle is big .
+the house is small .
+we live in a house .
+they live in a small house .
+the river is long .
+the mountain is tall .
+the mountain is covered with snow .
+the snow falls in winter .
+the leaves fall in autumn .
+the flowers grow in spring .
+the sun is hot in summer .
+i love the winter .
+i love the summer .
+she loves the spring .
+he loves the autumn .
+the students study at school .
+the teacher teaches at school .
+the doctor works at the hospital .
+the nurse works at the hospital .
+the pilot flies the plane .
+the plane flies in the sky .
+the train runs on the tracks .
+the ship sails on the sea .
+hi there .
+hi how are you .
+hello how are you .
+hello there .
+how are you today .
+how are you doing .
+i am fine .
+i am good .
+i am great .
+i am doing well .
+i am happy .
+i am tired .
+i am hungry .
+i am busy today .
+what is your name .
+my name is mini llm .
+what is your favorite food .
+my favorite food is pizza .
+nice to meet you .
+it is nice to meet you .
+good morning .
+good morning to you .
+good evening .
+good night .
+see you later .
+see you tomorrow .
+thank you .
+thank you very much .
+you are welcome .
+i am learning to code .
+i am learning python .
+i like to learn new things .
+this is a small model .
+this model is still learning .
+i am a small language model .
+i love to chat with you .
+i love talking about the weather .
+i love talking about animals .
+what do you like to do .
+i like to read books .
+i like to play games .
+i like to watch movies .
+do you like pizza .
+yes i like pizza .
+no i do not like pizza .
+where do you live .
+i live in a small house .
+who is your friend .
+the cat is my friend .
+the dog is my best friend .

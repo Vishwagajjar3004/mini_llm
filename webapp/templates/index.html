@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MiniLLM &mdash; Chat &amp; PDF/ZIP Q&amp;A</title>
+<style>
+  :root {
+    --bg: #0f1115;
+    --panel: #161922;
+    --panel-border: #262b38;
+    --text: #e7e9ee;
+    --text-dim: #8891a3;
+    --accent-fact: #d9a441;   /* amber = retrieval / grounded fact */
+    --accent-gen: #8b7fe8;    /* violet = MiniLLM generation / style */
+    --danger: #e0685c;
+    --mono: "IBM Plex Mono", "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--mono);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 40px 20px 80px;
+  }
+
+  .wrap { width: 100%; max-width: 760px; }
+
+  header { margin-bottom: 24px; }
+  header .eyebrow {
+    color: var(--text-dim);
+    font-size: 12px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+  header h1 {
+    font-size: 26px;
+    margin: 6px 0 8px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+  header p { color: var(--text-dim); font-size: 13.5px; line-height: 1.6; max-width: 62ch; }
+  header p .fact { color: var(--accent-fact); }
+  header p .gen { color: var(--accent-gen); }
+
+  /* ---- Tabs ---- */
+  .tabs {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 20px;
+    border-bottom: 1px solid var(--panel-border);
+  }
+  .tab-btn {
+    background: none;
+    border: none;
+    color: var(--text-dim);
+    font-family: var(--mono);
+    font-size: 13px;
+    font-weight: 600;
+    padding: 10px 4px;
+    margin-right: 20px;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+  }
+  .tab-btn.active { color: var(--text); border-bottom-color: var(--accent-gen); }
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--panel-border);
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 20px;
+  }
+
+  /* ---- Upload zone ---- */
+  #dropzone {
+    border: 1.5px dashed var(--panel-border);
+    border-radius: 8px;
+    padding: 28px 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color 0.15s ease, background 0.15s ease;
+  }
+  #dropzone:hover, #dropzone.drag { border-color: var(--accent-fact); background: #1b1e28; }
+  #dropzone .icon { font-size: 22px; margin-bottom: 8px; }
+  #dropzone .main { font-size: 14px; }
+  #dropzone .sub { font-size: 12px; color: var(--text-dim); margin-top: 4px; }
+  #fileInput { display: none; }
+
+  #docStatus {
+    display: none;
+    font-size: 12.5px;
+    color: var(--text-dim);
+    margin-top: 14px;
+    line-height: 1.7;
+    border-top: 1px solid var(--panel-border);
+    padding-top: 12px;
+  }
+  #docStatus b { color: var(--text); }
+  #docStatus .filename { color: var(--accent-fact); }
+
+  /* ---- Chat / QA shared ---- */
+  #qaChatPanel { display: none; }
+
+  .chat-log { display: flex; flex-direction: column; gap: 18px; margin-bottom: 16px; }
+
+  .qa-block { display: flex; flex-direction: column; gap: 8px; }
+  .question {
+    align-self: flex-end;
+    background: #232838;
+    padding: 8px 14px;
+    border-radius: 8px 8px 2px 8px;
+    font-size: 13.5px;
+    max-width: 80%;
+  }
+
+  .answer-card {
+    border-radius: 8px;
+    padding: 12px 14px;
+    font-size: 13.5px;
+    line-height: 1.6;
+    border-left: 3px solid transparent;
+  }
+  .answer-card.fact {
+    background: #1c1912;
+    border-left-color: var(--accent-fact);
+  }
+  .answer-card.gen {
+    background: #17151f;
+    border-left-color: var(--accent-gen);
+  }
+  .answer-card .label {
+    font-size: 10.5px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+    display: block;
+  }
+  .answer-card.fact .label { color: var(--accent-fact); }
+  .answer-card.gen .label { color: var(--accent-gen); }
+  .answer-card .score { color: var(--text-dim); font-size: 11px; margin-left: 8px; }
+  .answer-card .note { color: var(--text-dim); font-size: 11.5px; margin-top: 6px; font-style: italic; }
+
+  .empty-note { color: var(--text-dim); font-size: 12.5px; }
+
+  .library-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 10px;
+    border-radius: 6px;
+    font-size: 12.5px;
+    cursor: pointer;
+    border: 1px solid transparent;
+  }
+  .library-item:hover { background: #1b1e28; border-color: var(--panel-border); }
+  .library-item.selected { border-color: var(--accent-gen); background: #1b1e28; }
+  .library-item .meta { color: var(--text-dim); font-size: 11px; }
+  .library-item .type-badge {
+    font-size: 9.5px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 1px 6px;
+    border-radius: 4px;
+    margin-right: 8px;
+  }
+  .type-badge.pdf { background: #2a2216; color: var(--accent-fact); }
+  .type-badge.zip { background: #1e2130; color: var(--accent-gen); }
+  .type-badge.code { background: #16241e; color: #6fcf97; }
+  .library-item .delete-btn {
+    background: none;
+    color: var(--text-dim);
+    padding: 2px 6px;
+    font-size: 14px;
+  }
+  .library-item .delete-btn:hover { color: var(--danger); }
+
+  form.ask-form { display: flex; gap: 8px; }
+  .ask-input {
+    flex: 1;
+    background: #0d0f14;
+    border: 1px solid var(--panel-border);
+    border-radius: 6px;
+    padding: 10px 12px;
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 13.5px;
+  }
+  .ask-input:focus { outline: none; border-color: var(--accent-gen); }
+  button {
+    background: var(--accent-gen);
+    color: #100e18;
+    border: none;
+    border-radius: 6px;
+    padding: 0 18px;
+    font-family: var(--mono);
+    font-weight: 600;
+    font-size: 13.5px;
+    cursor: pointer;
+  }
+  button:disabled { opacity: 0.5; cursor: default; }
+
+  .error-box {
+    display: none;
+    background: #241618;
+    border-left: 3px solid var(--danger);
+    color: #f0a49d;
+    padding: 10px 14px;
+    border-radius: 6px;
+    font-size: 13px;
+    margin-top: 14px;
+  }
+
+  .spinner {
+    display: inline-block;
+    width: 12px; height: 12px;
+    border: 2px solid var(--text-dim);
+    border-top-color: var(--accent-fact);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    vertical-align: middle;
+    margin-right: 8px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  footer { margin-top: 30px; color: var(--text-dim); font-size: 11.5px; text-align: center; line-height: 1.7; }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">MiniLLM &middot; retrieval + tiny transformer</div>
+    <h1>Chat &amp; ask your documents</h1>
+    <p>
+      <span class="fact">Document Q&amp;A</span>: upload a PDF, ZIP, or code file (.py, .js, .java, ...) &mdash; every answer shows
+      <span class="fact">amber</span> (the real content found via search &mdash; accurate) and
+      <span class="gen">violet</span> (MiniLLM continuing it in the upload's own vocabulary &mdash; styled, not guaranteed accurate).
+      Uploads are saved, so they're still here after a restart.
+      <span class="gen">Chat</span>: talk directly to the base MiniLLM, no upload needed.
+    </p>
+  </header>
+
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="docTab">Document Q&amp;A</button>
+    <button class="tab-btn" data-tab="chatTab">Chat</button>
+  </div>
+
+  <!-- ============== DOCUMENT Q&A TAB ============== -->
+  <div class="tab-panel active" id="docTab">
+    <div class="panel">
+      <div id="dropzone">
+        <div class="icon">&#8593;</div>
+        <div class="main">Drop a PDF, ZIP, or code file here, or click to choose one</div>
+        <div class="sub">.pdf &middot; .zip (of .pdf/.txt) &middot; .py .js .ts .java .c .cpp .go .rb .php ... &middot; scanned/image-only PDFs won't extract</div>
+        <input type="file" id="fileInput" accept=".pdf,.zip,.py,.js,.jsx,.ts,.tsx,.java,.c,.cpp,.h,.hpp,.go,.rb,.php,.cs,.swift,.kt,.rs">
+      </div>
+      <div id="docStatus"></div>
+      <div class="error-box" id="uploadError"></div>
+    </div>
+
+    <div class="panel" id="libraryPanel">
+      <div class="label" style="font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--text-dim);margin-bottom:10px;">Previously uploaded files</div>
+      <div id="libraryList" class="empty-note">Loading...</div>
+    </div>
+
+    <div class="panel" id="qaChatPanel">
+      <div class="chat-log" id="qaLog"></div>
+      <form class="ask-form" id="askForm">
+        <input type="text" class="ask-input" id="questionInput" placeholder="Ask something about the upload..." autocomplete="off">
+        <button type="submit" id="askBtn">Ask</button>
+      </form>
+      <div class="error-box" id="askError"></div>
+    </div>
+  </div>
+
+  <!-- ============== CHAT TAB ============== -->
+  <div class="tab-panel" id="chatTab">
+    <div class="panel">
+      <div class="chat-log" id="chatLog">
+        <div class="empty-note">
+          This is the base MiniLLM (trained on data/dataset.txt) &mdash; a tiny word-level model with no document loaded.
+          It continues whatever you type, autocomplete-style. Try short prompts like "the cat" or "how are you".
+        </div>
+      </div>
+      <form class="ask-form" id="chatForm">
+        <input type="text" class="ask-input" id="chatInput" placeholder="Say something to MiniLLM..." autocomplete="off">
+        <button type="submit" id="chatBtn">Send</button>
+      </form>
+      <div class="error-box" id="chatError"></div>
+    </div>
+  </div>
+
+  <footer>
+    This is an educational tool. MiniLLM is a small model with no outside knowledge and can be wrong.
+    In Document Q&amp;A, trust the amber text; read the violet text as style, not fact.
+  </footer>
+</div>
+
+<script>
+// ---------------- Tab switching ----------------
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById(btn.dataset.tab).classList.add('active');
+  });
+});
+
+function escapeHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+// ---------------- Document Q&A tab ----------------
+const dropzone = document.getElementById('dropzone');
+const fileInput = document.getElementById('fileInput');
+const docStatus = document.getElementById('docStatus');
+const uploadError = document.getElementById('uploadError');
+const libraryList = document.getElementById('libraryList');
+const qaChatPanel = document.getElementById('qaChatPanel');
+const qaLog = document.getElementById('qaLog');
+const askForm = document.getElementById('askForm');
+const questionInput = document.getElementById('questionInput');
+const askBtn = document.getElementById('askBtn');
+const askError = document.getElementById('askError');
+
+let currentDocId = null;
+
+dropzone.addEventListener('click', () => fileInput.click());
+dropzone.addEventListener('dragover', (e) => { e.preventDefault(); dropzone.classList.add('drag'); });
+dropzone.addEventListener('dragleave', () => dropzone.classList.remove('drag'));
+dropzone.addEventListener('drop', (e) => {
+  e.preventDefault();
+  dropzone.classList.remove('drag');
+  if (e.dataTransfer.files.length) handleUpload(e.dataTransfer.files[0]);
+});
+fileInput.addEventListener('change', () => {
+  if (fileInput.files.length) handleUpload(fileInput.files[0]);
+});
+
+function typeBadge(docType) {
+  const label = docType === 'pdf' ? 'PDF' : docType === 'zip' ? 'ZIP' : 'CODE';
+  return '<span class="type-badge ' + docType + '">' + label + '</span>';
+}
+
+async function loadLibrary() {
+  try {
+    const res = await fetch('/api/documents');
+    const data = await res.json();
+
+    if (!data.documents || data.documents.length === 0) {
+      libraryList.innerHTML = '<div class="empty-note">Nothing uploaded yet.</div>';
+      return;
+    }
+
+    libraryList.innerHTML = '';
+    data.documents.forEach(doc => {
+      const item = document.createElement('div');
+      item.className = 'library-item' + (doc.doc_id === currentDocId ? ' selected' : '');
+      item.innerHTML =
+        '<span>' + typeBadge(doc.doc_type) + escapeHtml(doc.filename) +
+        '<span class="meta"> &middot; ' + doc.num_sentences + ' sentences</span></span>' +
+        '<button class="delete-btn" data-id="' + doc.doc_id + '" title="Delete">&times;</button>';
+
+      item.addEventListener('click', (e) => {
+        if (e.target.classList.contains('delete-btn')) return;
+        selectDocument(doc.doc_id);
+      });
+      item.querySelector('.delete-btn').addEventListener('click', async (e) => {
+        e.stopPropagation();
+        await fetch('/api/documents/' + doc.doc_id, { method: 'DELETE' });
+        if (doc.doc_id === currentDocId) {
+          currentDocId = null;
+          qaChatPanel.style.display = 'none';
+          docStatus.style.display = 'none';
+        }
+        loadLibrary();
+      });
+      libraryList.appendChild(item);
+    });
+  } catch (err) {
+    libraryList.innerHTML = '<div class="empty-note">Could not load the list.</div>';
+  }
+}
+
+async function selectDocument(docId) {
+  uploadError.style.display = 'none';
+  docStatus.style.display = 'block';
+  docStatus.innerHTML = '<span class="spinner"></span> Loading saved document...';
+
+  try {
+    const res = await fetch('/api/select', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ doc_id: docId })
+    });
+    const data = await res.json();
+
+    if (!res.ok) {
+      docStatus.style.display = 'none';
+      uploadError.textContent = data.error || 'Could not load that document.';
+      uploadError.style.display = 'block';
+      return;
+    }
+
+    activateDocument(data);
+    loadLibrary();
+  } catch (err) {
+    docStatus.style.display = 'none';
+    uploadError.textContent = 'Something went wrong reaching the server.';
+    uploadError.style.display = 'block';
+  }
+}
+
+function activateDocument(data) {
+  currentDocId = data.doc_id;
+
+  let sourceLine = data.source_files && data.source_files.length > 1
+    ? 'Files read: <b>' + data.source_files.length + '</b> (' + escapeHtml(data.source_files.join(', ')) + ')<br>'
+    : '';
+  let skippedLine = data.skipped_files && data.skipped_files.length
+    ? 'Skipped (unsupported): <b>' + data.skipped_files.length + '</b><br>'
+    : '';
+  let trainedLine = data.trained_on_sentences !== undefined
+    ? 'Trained on: <b>' + data.trained_on_sentences + '</b> &middot; Vocabulary: <b>' + data.vocab_size + '</b> words &middot; Loss: <b>' + data.final_loss + '</b>'
+    : 'Sentences indexed: <b>' + data.num_sentences + '</b>';
+
+  docStatus.innerHTML =
+    typeBadge(data.doc_type) + '<span class="filename">' + escapeHtml(data.filename) + '</span><br>' +
+    sourceLine + skippedLine + trainedLine;
+
+  qaChatPanel.style.display = 'block';
+  qaLog.innerHTML = '<div class="empty-note">Ask anything about this upload below.'
+    + (data.doc_type === 'code' ? ' Try: "explain this code".' : '') + '</div>';
+  questionInput.focus();
+}
+
+async function handleUpload(file) {
+  uploadError.style.display = 'none';
+  docStatus.style.display = 'block';
+  docStatus.innerHTML = '<span class="spinner"></span> Processing and training MiniLLM on this upload (a few seconds)...';
+
+  const formData = new FormData();
+  formData.append('file', file);
+
+  try {
+    const res = await fetch('/api/upload', { method: 'POST', body: formData });
+    const data = await res.json();
+
+    if (!res.ok) {
+      docStatus.style.display = 'none';
+      uploadError.textContent = data.error || 'Upload failed.';
+      uploadError.style.display = 'block';
+      return;
+    }
+
+    activateDocument(data);
+    loadLibrary();
+  } catch (err) {
+    docStatus.style.display = 'none';
+    uploadError.textContent = 'Something went wrong reaching the server.';
+    uploadError.style.display = 'block';
+  }
+}
+
+askForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const question = questionInput.value.trim();
+  if (!question || !currentDocId) return;
+
+  askError.style.display = 'none';
+  askBtn.disabled = true;
+
+  const qBlock = document.createElement('div');
+  qBlock.className = 'qa-block';
+  qBlock.innerHTML = '<div class="question">' + escapeHtml(question) + '</div>' +
+    '<div class="answer-card fact"><span class="spinner"></span>Searching...</div>';
+  qaLog.querySelector('.empty-note')?.remove();
+  qaLog.appendChild(qBlock);
+  qBlock.scrollIntoView({ behavior: 'smooth', block: 'end' });
+
+  questionInput.value = '';
+
+  try {
+    const res = await fetch('/api/ask', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ doc_id: currentDocId, question })
+    });
+    const data = await res.json();
+
+    if (!res.ok) {
+      qBlock.remove();
+      askError.textContent = data.error || 'Something went wrong.';
+      askError.style.display = 'block';
+      return;
+    }
+
+    if (!data.extracted_answer) {
+      qBlock.querySelector('.answer-card').outerHTML =
+        '<div class="answer-card fact"><span class="label">Found</span>' +
+        escapeHtml(data.message || 'No relevant match found.') + '</div>';
+      return;
+    }
+
+    let html;
+    if (data.is_full_explanation) {
+      html = '<div class="answer-card fact"><span class="label">Code structure (parsed directly, not guessed)</span>' +
+        escapeHtml(data.extracted_answer).replace(/\n/g, '<br>') + '</div>';
+    } else {
+      const scorePct = Math.round(data.matches[0].score * 100);
+      html = '<div class="answer-card fact"><span class="label">Found<span class="score">' +
+        scorePct + '% match</span></span>' + escapeHtml(data.extracted_answer) + '</div>';
+
+      if (data.styled_answer) {
+        html += '<div class="answer-card gen"><span class="label">MiniLLM says</span>' +
+          escapeHtml(data.styled_answer) + '</div>';
+      }
+    }
+
+    qBlock.querySelector('.answer-card').outerHTML = html;
+  } catch (err) {
+    qBlock.remove();
+    askError.textContent = 'Something went wrong reaching the server.';
+    askError.style.display = 'block';
+  } finally {
+    askBtn.disabled = false;
+  }
+});
+
+loadLibrary();
+
+// ---------------- Chat tab ----------------
+const chatLog = document.getElementById('chatLog');
+const chatForm = document.getElementById('chatForm');
+const chatInput = document.getElementById('chatInput');
+const chatBtn = document.getElementById('chatBtn');
+const chatError = document.getElementById('chatError');
+
+chatForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const message = chatInput.value.trim();
+  if (!message) return;
+
+  chatError.style.display = 'none';
+  chatBtn.disabled = true;
+
+  const qBlock = document.createElement('div');
+  qBlock.className = 'qa-block';
+  qBlock.innerHTML = '<div class="question">' + escapeHtml(message) + '</div>' +
+    '<div class="answer-card gen"><span class="spinner"></span>Thinking...</div>';
+  chatLog.querySelector('.empty-note')?.remove();
+  chatLog.appendChild(qBlock);
+  qBlock.scrollIntoView({ behavior: 'smooth', block: 'end' });
+
+  chatInput.value = '';
+
+  try {
+    const res = await fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message })
+    });
+    const data = await res.json();
+
+    if (!res.ok) {
+      qBlock.remove();
+      chatError.textContent = data.error || 'Something went wrong.';
+      chatError.style.display = 'block';
+      return;
+    }
+
+    let html = '<div class="answer-card gen"><span class="label">MiniLLM</span>' + escapeHtml(data.response) + '</div>';
+    if (data.unknown_words && data.unknown_words.length) {
+      html = html.replace('</div>',
+        '<div class="note">Words not in vocabulary: ' + escapeHtml(data.unknown_words.join(', ')) + '</div></div>');
+    }
+    qBlock.querySelector('.answer-card').outerHTML = html;
+  } catch (err) {
+    qBlock.remove();
+    chatError.textContent = 'Something went wrong reaching the server.';
+    chatError.style.display = 'block';
+  } finally {
+    chatBtn.disabled = false;
+  }
+});
+</script>
+
+</body>
+</html>
